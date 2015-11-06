@@ -4,11 +4,9 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -24,10 +22,15 @@ import android.widget.ImageView;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.Bind;
+import butterknife.BindDrawable;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
 public class PhotoGalleryFragment extends VisibleFragment {
     private static final String TAG = "PhotoGalleryFragment";
 
-    private RecyclerView mPhotoRecyclerView;
+    @Bind(R.id.fragment_photo_gallery_recycler_view) protected RecyclerView mPhotoRecyclerView;
     private List<GalleryItem> mItems = new ArrayList<>();
     private ThumbnailDownloader<PhotoHolder> mThumbnailDownloader;
 
@@ -63,8 +66,7 @@ public class PhotoGalleryFragment extends VisibleFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
-        mPhotoRecyclerView = (RecyclerView) v
-                 .findViewById(R.id.fragment_photo_gallery_recycler_view);
+        ButterKnife.bind(this, v);
         mPhotoRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3));
 
         setupAdapter();
@@ -76,6 +78,7 @@ public class PhotoGalleryFragment extends VisibleFragment {
     public void onDestroyView() {
         super.onDestroyView();
         mThumbnailDownloader.clearQueue();
+        ButterKnife.unbind(this);
     }
 
     @Override
@@ -153,17 +156,13 @@ public class PhotoGalleryFragment extends VisibleFragment {
         }
     }
 
-    private class PhotoHolder extends RecyclerView.ViewHolder
-            implements View.OnClickListener{
-        private ImageView mItemImageView;
+    protected class PhotoHolder extends RecyclerView.ViewHolder {
+        @Bind(R.id.fragment_photo_gallery_image_view) protected ImageView mItemImageView;
         private GalleryItem mGalleryItem;
 
         public PhotoHolder(View itemView) {
             super(itemView);
-
-            mItemImageView = (ImageView) itemView
-                    .findViewById(R.id.fragment_photo_gallery_image_view);
-            itemView.setOnClickListener(this);
+            ButterKnife.bind(this, itemView);
         }
 
         public void bindDrawable(Drawable drawable) {
@@ -174,7 +173,7 @@ public class PhotoGalleryFragment extends VisibleFragment {
             mGalleryItem = galleryItem;
         }
 
-        @Override
+        @OnClick(R.id.fragment_photo_gallery_image_view)
         public void onClick(View v) {
             Intent i = PhotoPageActivity
                     .newIntent(getActivity(), mGalleryItem.getPhotoPageUri());
@@ -182,9 +181,10 @@ public class PhotoGalleryFragment extends VisibleFragment {
         }
     }
 
-    private class PhotoAdapter extends RecyclerView.Adapter<PhotoHolder> {
+    protected class PhotoAdapter extends RecyclerView.Adapter<PhotoHolder> {
 
         private List<GalleryItem> mGalleryItems;
+        @BindDrawable(R.drawable.bill_up_close) protected Drawable mPlaceholder;
 
         public PhotoAdapter(List<GalleryItem> galleryItems) {
             mGalleryItems = galleryItems;
@@ -194,6 +194,7 @@ public class PhotoGalleryFragment extends VisibleFragment {
         public PhotoHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
             LayoutInflater inflater = LayoutInflater.from(getActivity());
             View view = inflater.inflate(R.layout.list_item_gallery, viewGroup, false);
+            ButterKnife.bind(this, view);
             return new PhotoHolder(view);
         }
 
@@ -201,8 +202,7 @@ public class PhotoGalleryFragment extends VisibleFragment {
         public void onBindViewHolder(PhotoHolder photoHolder, int position) {
             GalleryItem galleryItem = mGalleryItems.get(position);
             photoHolder.bindGalleryItem(galleryItem);
-            Drawable placeholder = getResources().getDrawable(R.drawable.bill_up_close);
-            photoHolder.bindDrawable(placeholder);
+            photoHolder.bindDrawable(mPlaceholder);
             mThumbnailDownloader.queueThumbnail(photoHolder, galleryItem.getUrl());
         }
 
